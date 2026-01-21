@@ -1,0 +1,109 @@
+<!doctype html>
+<html lang="en">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Document</title>
+    </head>
+    <body>
+        <center style="margin-top: 2em; font-size: 1em">
+            <input type="file" id="fileInput" />
+            <button onclick="upload()">Upload</button>
+        </center>
+
+        <script>
+            async function upload() {
+                const file = document.querySelector("#fileInput").files[0];
+
+                if (!file) {
+                    alert("Please select a file");
+                    return;
+                }
+
+                console.log(file);
+
+                try {
+                    // 1️⃣ Get presigned URL from backend
+                    const res = await fetch(
+                        "http://localhost:6030/v1/files/upload-url",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "x-farman-key": "1234567890abcdef",
+                            },
+                            body: JSON.stringify([
+                                {
+                                    userId: "e52071be-0fba-4515-a7cd-22ee21a6fa7b",
+                                    fileName: file.name, // ✅ Changed from file.fileName
+                                    fileType: file.type,
+                                    fileSize: file.size,
+                                    folder: "vendor_docs",
+                                    documentTitle: "cac",
+                                    expiresIn: 500,
+                                },
+                            ]),
+                        },
+                    );
+
+                    if (!res.ok) {
+                        const error = await res.json();
+                        console.error("Backend error:", error);
+                        alert(`Error: ${JSON.stringify(error)}`);
+                        return;
+                    }
+
+                    const data = await res.json();
+                    console.log("Backend response:", data);
+
+                    const uploadUrl = data.results[0].uploadUrl; // ✅ Access via results
+                    const fileKey = data.results[0].key;
+
+                    // 2️⃣ Upload directly to R2
+                    const uploadRes = await fetch(uploadUrl, {
+                        method: "PUT",
+                        headers: {
+                            "Content-Type": file.type,
+                        },
+                        body: file,
+                    });
+
+                    if (!uploadRes.ok) {
+                        console.error("R2 upload failed:", uploadRes);
+                        alert("Upload to R2 failed");
+                        return;
+                    }
+
+                    console.log("✅ Uploaded to R2! File key:", fileKey);
+
+                    // 3️⃣ Confirm upload to backend
+                    const callbackRes = await fetch(
+                        "http://localhost:6030/v1/files/upload/callback",
+                        {
+                            method: "POST",
+                            headers: {
+                                "Content-Type": "application/json",
+                                "x-farman-key": "1234567890abcdef",
+                            },
+                            body: JSON.stringify([
+                                {
+                                    userId: "e52071be-0fba-4515-a7cd-22ee21a6fa7b",
+                                    key: fileKey,
+                                    folder: "vendor_docs",
+                                    documentTitle: "cac",
+                                },
+                            ]),
+                        },
+                    );
+
+                    if (callbackRes.ok) {
+                        alert("✅ File uploaded and saved successfully!");
+                    }
+                } catch (error) {
+                    console.error("Upload error:", error);
+                    alert("Upload failed: " + error.message);
+                }
+            }
+        </script>
+    </body>
+</html>
