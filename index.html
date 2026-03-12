@@ -1,4 +1,4 @@
-<!doctype html>
+<!-- <!doctype html>
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
@@ -7,8 +7,22 @@
   </head>
   <body>
     <center style="margin-top: 2em; font-size: 1em">
-      <input type="file" id="fileInput" />
-      <button onclick="upload()">Upload</button>
+      <h1>Farman File Upload</h1>
+      <div
+        style="
+          border: 2px solid black;
+          border-radius: 10px;
+          height: 300px;
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          padding: 20px;
+          width: 50vw;
+        "
+      >
+        <input type="file" id="fileInput" multiple style="cursor: pointer" />
+        <button onclick="upload()">Upload</button>
+      </div>
     </center>
 
     <script>
@@ -86,7 +100,6 @@
               },
               body: JSON.stringify([
                 {
-                  userId: "e52071be-0fba-4515-a7cd-22ee21a6fa7b",
                   key: fileKey,
                   folder: "vendor_docs",
                   documentTitle: "cac",
@@ -101,6 +114,399 @@
         } catch (error) {
           console.error("Upload error:", error);
           alert("Upload failed: " + error.message);
+        }
+      }
+    </script>
+  </body>
+</html> -->
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Farman File Upload Tester</title>
+    <style>
+      * {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+      body {
+        font-family: sans-serif;
+        background: #f5f5f5;
+        padding: 2em;
+      }
+      h1 {
+        text-align: center;
+        margin-bottom: 1.5em;
+        color: #2d6a4f;
+      }
+      .card {
+        background: white;
+        border-radius: 12px;
+        padding: 2em;
+        max-width: 600px;
+        margin: 0 auto;
+        box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+      }
+      .form-group {
+        margin-bottom: 1.2em;
+      }
+      label {
+        display: block;
+        font-weight: bold;
+        margin-bottom: 0.4em;
+        font-size: 0.9em;
+        color: #333;
+      }
+      input,
+      select,
+      textarea {
+        width: 100%;
+        padding: 0.6em 0.8em;
+        border: 1px solid #ccc;
+        border-radius: 6px;
+        font-size: 0.95em;
+      }
+      button {
+        width: 100%;
+        padding: 0.8em;
+        background: #2d6a4f;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        font-size: 1em;
+        cursor: pointer;
+        margin-top: 0.5em;
+      }
+      button:hover {
+        background: #1b4332;
+      }
+      button:disabled {
+        background: #aaa;
+        cursor: not-allowed;
+      }
+      .log {
+        margin-top: 1.5em;
+        background: #1e1e1e;
+        color: #d4d4d4;
+        border-radius: 8px;
+        padding: 1em;
+        font-family: monospace;
+        font-size: 0.85em;
+        max-height: 400px;
+        overflow-y: auto;
+        white-space: pre-wrap;
+        word-break: break-all;
+      }
+      .log .success {
+        color: #4ec9b0;
+      }
+      .log .error {
+        color: #f44747;
+      }
+      .log .info {
+        color: #9cdcfe;
+      }
+      .log .warn {
+        color: #ce9178;
+      }
+      .step {
+        color: #dcdcaa;
+        font-weight: bold;
+      }
+      .conditional {
+        display: none;
+      }
+    </style>
+  </head>
+  <body>
+    <h1>🌾 Farman File Upload Tester</h1>
+
+    <div class="card">
+      <div class="form-group">
+        <label>JWT Token</label>
+        <input
+          type="text"
+          id="jwtToken"
+          placeholder="Paste your Bearer token here"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>Folder</label>
+        <select id="folderSelect" onchange="onFolderChange()">
+          <option value="vendor_docs">vendor_docs</option>
+          <option value="store">store</option>
+          <option value="products">products</option>
+          <option value="profile">profile</option>
+          <option value="receipts">receipts</option>
+        </select>
+      </div>
+
+      <!-- store options -->
+      <div class="form-group conditional" id="storeGroup">
+        <label>Store Image Type</label>
+        <select id="storeType">
+          <option value="logo">logo</option>
+          <option value="banner">banner</option>
+        </select>
+      </div>
+
+      <!-- products options -->
+      <div class="form-group conditional" id="productTypeGroup">
+        <label>Entity Type</label>
+        <select id="productEntityType">
+          <option value="product">product</option>
+          <option value="variant">variant</option>
+        </select>
+      </div>
+      <div class="form-group conditional" id="productIdGroup">
+        <label>Product / Variant ID</label>
+        <input
+          type="text"
+          id="entityId"
+          placeholder="UUID of product or variant"
+        />
+      </div>
+
+      <!-- receipts options -->
+      <div class="form-group conditional" id="orderIdGroup">
+        <label>Order ID</label>
+        <input type="text" id="orderId" placeholder="UUID of order" />
+      </div>
+      <div class="form-group conditional" id="receiptTypeGroup">
+        <label>Receipt Type</label>
+        <select id="receiptType">
+          <option value="vendor_invoice">vendor_invoice</option>
+          <option value="payment_confirmation">payment_confirmation</option>
+          <option value="delivery_note">delivery_note</option>
+          <option value="refund_receipt">refund_receipt</option>
+        </select>
+      </div>
+
+      <!-- vendor_docs options -->
+      <div class="form-group conditional" id="docTitleGroup">
+        <label>Document Title</label>
+        <input
+          type="text"
+          id="docTitle"
+          placeholder="e.g. cac, tin, business_permit"
+        />
+      </div>
+
+      <div class="form-group">
+        <label>File</label>
+        <input type="file" id="fileInput" />
+      </div>
+
+      <button id="uploadBtn" onclick="upload()">Upload</button>
+
+      <div class="log" id="log">Logs will appear here...</div>
+    </div>
+
+    <script>
+      const BASE_URL = "http://localhost:6030";
+
+      function onFolderChange() {
+        const folder = document.querySelector("#folderSelect").value;
+
+        // hide all conditional groups first
+        document
+          .querySelectorAll(".conditional")
+          .forEach((el) => (el.style.display = "none"));
+
+        if (folder === "store") {
+          document.querySelector("#storeGroup").style.display = "block";
+        } else if (folder === "products") {
+          document.querySelector("#productTypeGroup").style.display = "block";
+          document.querySelector("#productIdGroup").style.display = "block";
+        } else if (folder === "receipts") {
+          document.querySelector("#orderIdGroup").style.display = "block";
+          document.querySelector("#receiptTypeGroup").style.display = "block";
+        } else if (folder === "vendor_docs") {
+          document.querySelector("#docTitleGroup").style.display = "block";
+        }
+      }
+
+      // show default on load
+      onFolderChange();
+
+      function log(message, type = "info") {
+        const logEl = document.querySelector("#log");
+        if (logEl.textContent === "Logs will appear here...") {
+          logEl.textContent = "";
+        }
+        const line = document.createElement("div");
+        line.className = type;
+        line.textContent = message;
+        logEl.appendChild(line);
+        logEl.scrollTop = logEl.scrollHeight;
+      }
+
+      function clearLog() {
+        document.querySelector("#log").textContent = "";
+      }
+
+      function buildDocumentTitle() {
+        const folder = document.querySelector("#folderSelect").value;
+        if (folder === "store") {
+          return document.querySelector("#storeType").value;
+        } else if (folder === "products") {
+          const entityType = document.querySelector("#productEntityType").value;
+          const entityId = document.querySelector("#entityId").value.trim();
+          return `${entityType}:${entityId}`;
+        } else if (folder === "receipts") {
+          const orderId = document.querySelector("#orderId").value.trim();
+          return `order:${orderId}`;
+        } else if (folder === "vendor_docs") {
+          return document.querySelector("#docTitle").value.trim();
+        }
+        return "";
+      }
+
+      function buildCategory() {
+        const folder = document.querySelector("#folderSelect").value;
+        if (folder === "receipts") {
+          return document.querySelector("#receiptType").value;
+        }
+        return null;
+      }
+
+      function getHeaders() {
+        const token = document.querySelector("#jwtToken").value.trim();
+        if (!token) {
+          throw new Error("JWT token is required");
+        }
+        return {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        };
+      }
+
+      async function upload() {
+        clearLog();
+        const btn = document.querySelector("#uploadBtn");
+        btn.disabled = true;
+        btn.textContent = "Uploading...";
+
+        try {
+          const file = document.querySelector("#fileInput").files[0];
+          if (!file) throw new Error("Please select a file");
+
+          const folder = document.querySelector("#folderSelect").value;
+          const documentTitle = buildDocumentTitle();
+          const category = buildCategory();
+
+          if (!documentTitle)
+            throw new Error(
+              "documentTitle could not be built — check your inputs",
+            );
+
+          log(`📁 Folder: ${folder}`, "info");
+          log(
+            `📄 File: ${file.name} (${(file.size / 1024).toFixed(1)} KB, ${file.type})`,
+            "info",
+          );
+          log(`🏷️  documentTitle: ${documentTitle}`, "info");
+          if (category) log(`🗂️  category: ${category}`, "info");
+
+          // STEP 1: Get presigned upload URL
+          log("\n── STEP 1: Getting presigned upload URL...", "step");
+
+          const presignBody = [
+            {
+              fileName: file.name,
+              fileType: file.type,
+              fileSize: file.size,
+              folder,
+              documentTitle,
+              expiresIn: 300,
+              ...(category && { category }),
+            },
+          ];
+
+          log(`Request: POST /v1/files/upload-url`, "info");
+          log(`Body: ${JSON.stringify(presignBody, null, 2)}`, "info");
+
+          const presignRes = await fetch(
+            `${BASE_URL}/v1/files/upload-url?tenant=adefarms.localhost`,
+            {
+              method: "POST",
+              headers: getHeaders(),
+              body: JSON.stringify(presignBody),
+            },
+          );
+
+          const presignData = await presignRes.json();
+          log(
+            `Response: ${JSON.stringify(presignData, null, 2)}`,
+            presignRes.ok ? "success" : "error",
+          );
+
+          if (!presignRes.ok)
+            throw new Error(`Presign failed: ${JSON.stringify(presignData)}`);
+
+          const { uploadUrl, key } = presignData.results[0];
+          log(`✅ Got presigned URL. Key: ${key}`, "success");
+
+          // STEP 2: Upload directly to R2
+          log("\n── STEP 2: Uploading file directly to R2...", "step");
+
+          const r2Res = await fetch(uploadUrl, {
+            method: "PUT",
+            headers: { "Content-Type": file.type },
+            body: file,
+          });
+
+          if (!r2Res.ok) {
+            const r2Error = await r2Res.text();
+            log(`R2 response: ${r2Error}`, "error");
+            throw new Error(`R2 upload failed with status ${r2Res.status}`);
+          }
+
+          log(`✅ File uploaded to R2 successfully`, "success");
+
+          // STEP 3: Confirm with callback
+          log("\n── STEP 3: Confirming upload with backend...", "step");
+
+          const callbackBody = [
+            {
+              key,
+              folder,
+              documentTitle,
+              ...(category && { category }),
+            },
+          ];
+
+          log(`Request: POST /v1/files/upload/callback`, "info");
+          log(`Body: ${JSON.stringify(callbackBody, null, 2)}`, "info");
+
+          const callbackRes = await fetch(
+            `${BASE_URL}/v1/files/upload/callback?tenant=adefarms.localhost`,
+            {
+              method: "POST",
+              headers: getHeaders(),
+              body: JSON.stringify(callbackBody),
+            },
+          );
+
+          const callbackData = await callbackRes.json();
+          log(
+            `Response: ${JSON.stringify(callbackData, null, 2)}`,
+            callbackRes.ok ? "success" : "error",
+          );
+
+          if (!callbackRes.ok)
+            throw new Error(`Callback failed: ${JSON.stringify(callbackData)}`);
+
+          log("\n🎉 Upload complete!", "success");
+        } catch (err) {
+          log(`\n❌ Error: ${err.message}`, "error");
+        } finally {
+          btn.disabled = false;
+          btn.textContent = "Upload";
         }
       }
     </script>
